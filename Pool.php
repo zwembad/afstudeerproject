@@ -15,6 +15,16 @@ class Pool {
     private $_shape;
     private $_type;
 
+    function __construct($_depth, $_diameter, $_length, $_shape, $_type, $_width)
+    {
+        $this->_depth = $_depth;
+        $this->_diameter = $_diameter;
+        $this->_length = $_length;
+        $this->_shape = $_shape;
+        $this->_type = $_type;
+        $this->_width = $_width;
+    }
+
     /**
      * @param mixed $depth
      */

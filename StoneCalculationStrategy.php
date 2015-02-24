@@ -8,7 +8,11 @@
 
 class StoneCalculationStrategy implements CalculationStrategy {
 
-   public function calculatePrice($pool, $borderstone){
+    function __construct()
+    {
+    }
+
+    public function calculatePrice($pool, $borderstone){
 
        if ($pool->getShape() == "Rechthoekig"){
            $metersStraight = ($pool->getLength() * 2) + ($pool->getLength() * 2);

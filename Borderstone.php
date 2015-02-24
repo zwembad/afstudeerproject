@@ -14,6 +14,15 @@ class Borderstone {
     private $_color;
     private $_tiles;
 
+    function __construct($_color, $_length, $_material, $_tiles, $_width)
+    {
+        $this->_color = $_color;
+        $this->_length = $_length;
+        $this->_material = $_material;
+        $this->_tiles = $_tiles;
+        $this->_width = $_width;
+    }
+
     /**
      * @param mixed $color
      */
