@@ -6,6 +6,8 @@
  * Time: 12:02
  */
 
+require_once('CalculationStrategy.php');
+
 class StoneCalculationStrategy implements CalculationStrategy {
 
     function __construct()
@@ -13,9 +15,12 @@ class StoneCalculationStrategy implements CalculationStrategy {
     }
 
     public function calculatePrice($pool, $borderstone){
-
+        $metersRound = 0;
+        $numberOfBorderstonesInnerCorner = 0;
+        $numberOfBorderstonesOuterCornerLeft = 0;
+        $numberOfBorderstonesOuterCornerRight = 0;
        if ($pool->getShape() == "Rechthoekig"){
-           $metersStraight = ($pool->getLength() * 2) + ($pool->getLength() * 2);
+           $metersStraight = ($pool->getLength() * 2) + ($pool->getWIdth() * 2);
            $numberOfBorderstonesInnerCorner = 4;
            $numberOfBorderstonesOuterCornerLeft = 0;
            $numberOfBorderstonesOuterCornerRight = 0;
@@ -29,20 +34,21 @@ class StoneCalculationStrategy implements CalculationStrategy {
            $numberOfBorderstonesOuterCornerLeft = 1;
            $numberOfBorderstonesOuterCornerRight = 1;
        } elseif ($pool->getShape() == "Rechthoekig met rechthoekige trap"){
-           $metersStraight = ($pool->getLength() * 2) + ($pool->getLength() * 2); //+C40
+           $metersStraight = ($pool->getLength() * 2) + ($pool->getWidth() * 2) + $pool->getDiameter(); //+C40
            $numberOfBorderstonesInnerCorner = 4;
            $numberOfBorderstonesOuterCornerLeft = 1;
            $numberOfBorderstonesOuterCornerRight = 1;
        } elseif ($pool->getShape() == "Rond"){
            $metersRound = $pool->getDiameter() * 3.16;
+           $metersStraight = 0;
        }
 
        $length = $borderstone->getLength() + 0.000001;
 
-       $numberOfBorderstonesStraight = 1 + floor($metersRound/($length/100) + 0.5);
+       $numberOfBorderstonesStraight = 1 + floor($metersStraight/($length/100) + 0.5); //floor 12/50/100
 
        if ($length > 1){
-           $numberOfBorderstonesCurved = floor($metersStraight/($length/100) + 0.5);
+           $numberOfBorderstonesCurved = floor($metersRound/($length/100) + 0.5);
        } else {
            $numberOfBorderstonesCurved = 0;
        }
@@ -92,6 +98,8 @@ class StoneCalculationStrategy implements CalculationStrategy {
        $array ['priceVoegsel'] = $priceVoegsel;
        $array ['priceTransport'] = $priceTransport;
        $array ['priceTotal'] = $priceTotal;
+
+       // $array = array('borderstonesStraight' => $numberOfBorderstonesStraight);
 
        return $array;
 }

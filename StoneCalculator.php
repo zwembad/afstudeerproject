@@ -6,6 +6,8 @@
  * Time: 14:52
  */
 
+require_once('Calculator.php');
+
 class StoneCalculator extends Calculator {
 
 }
