@@ -19,28 +19,28 @@ class StoneCalculationStrategy implements CalculationStrategy {
         $numberOfBorderstonesInnerCorner = 0;
         $numberOfBorderstonesOuterCornerLeft = 0;
         $numberOfBorderstonesOuterCornerRight = 0;
-       if ($pool->getShape() == "Rechthoekig"){
+       if ($pool->getShape() == 1){ //Rechthoekig
            $metersStraight = ($pool->getLength() * 2) + ($pool->getWIdth() * 2);
            $numberOfBorderstonesInnerCorner = 4;
            $numberOfBorderstonesOuterCornerLeft = 0;
            $numberOfBorderstonesOuterCornerRight = 0;
-       } elseif ($pool->getShape() == "Ovaal"){
-           $metersStraight = 2* ($pool->getLength() - $pool->getWidth());
-           $metersRound = $pool->getWidth() * 3.16;
-       } elseif ($pool->getShape() == "Rechthoekig met rom trap"){
+       } elseif ($pool->getShape() == 2){ // "Rechthoekig met rom trap"
            $metersStraight = (2 * ($pool->getLength() + $pool->getWidth())) - $pool->getDiameter();
            $metersRound = $pool->getDiameter() * 3.16/2;
            $numberOfBorderstonesInnerCorner = 4;
            $numberOfBorderstonesOuterCornerLeft = 1;
            $numberOfBorderstonesOuterCornerRight = 1;
-       } elseif ($pool->getShape() == "Rechthoekig met rechthoekige trap"){
-           $metersStraight = ($pool->getLength() * 2) + ($pool->getWidth() * 2) + $pool->getDiameter(); //+C40
+       } elseif ($pool->getShape() == 3){ //"Rechthoekig met rechthoekige trap"
+           $metersStraight = ($pool->getLength() * 2) + ($pool->getWidth() * 2); //+ $pool->getDiameter(); //+C40
            $numberOfBorderstonesInnerCorner = 4;
            $numberOfBorderstonesOuterCornerLeft = 1;
            $numberOfBorderstonesOuterCornerRight = 1;
-       } elseif ($pool->getShape() == "Rond"){
+       } elseif ($pool->getShape() == 4){ // Rond
            $metersRound = $pool->getDiameter() * 3.16;
            $metersStraight = 0;
+       } elseif ($pool->getShape() == 5){ //"Ovaal"
+           $metersStraight = 2* ($pool->getLength() - $pool->getWidth());
+           $metersRound = $pool->getWidth() * 3.16;
        }
 
        $length = $borderstone->getLength() + 0.000001;
