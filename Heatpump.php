@@ -7,5 +7,8 @@
  */
 
 class Heatpump extends Product {
-
+	
+	public function __Construct($_price, $_referenceInternal){
+		parent::__construct($_price, $_referenceInternal);
+	}
 } 

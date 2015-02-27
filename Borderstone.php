@@ -13,8 +13,9 @@ class Borderstone extends Product {
     private $_tiles; // 50x50 tegels (boolean)
     private $_shape; // gebogen, binnenhoek, buitenhoek, ...
 
-    function __construct($_category, $_color, $_length, $_material, $_tiles, $_type, $_width)
+    function __construct($_price, $_referenceInternal, $_category, $_color, $_length, $_material, $_tiles, $_type, $_width, $_shape)
     {
+		parent::__construct($_price, $_referenceInternal);
         $this->_category = $_category;
         $this->_color = $_color;
         $this->_length = $_length;
@@ -22,6 +23,7 @@ class Borderstone extends Product {
         $this->_tiles = $_tiles;
         $this->_type = $_type;
         $this->_width = $_width;
+		$this->_shape = $_shape;
     }
 
     public function setCategory($category)
