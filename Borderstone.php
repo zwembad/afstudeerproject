@@ -1,20 +1,17 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Michael
- * Date: 24/02/15
- * Time: 12:06
- */
 
-class Borderstone {
+
+class Borderstone extends Product {
 
     private $_length;
     private $_width;
-    private $_material;
+    private $_height;
+    private $_category; //natuursteen or betonsteen
+    private $_material; //jasberg, black panda, ...
+    private $_type; // type neus, type L, type I
     private $_color;
-    private $_tiles;
-    private $_category;
-    private $_type;
+    private $_tiles; // 50x50 tegels (boolean)
+    private $_shape; // gebogen, binnenhoek, buitenhoek, ...
 
     function __construct($_category, $_color, $_length, $_material, $_tiles, $_type, $_width)
     {
@@ -95,6 +92,26 @@ class Borderstone {
     public function getWidth()
     {
         return $this->_width;
+    }
+
+    public function setHeight($height)
+    {
+        $this->_height = $height;
+    }
+
+    public function getHeight()
+    {
+        return $this->_height;
+    }
+
+    public function setShape($shape)
+    {
+        $this->_shape = $shape;
+    }
+
+    public function getShape()
+    {
+        return $this->_shape;
     }
 
 } 

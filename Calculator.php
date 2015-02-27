@@ -8,4 +8,6 @@
 
 abstract class Calculator {
 
+    private $_calculationStrategy;
+
 } 
