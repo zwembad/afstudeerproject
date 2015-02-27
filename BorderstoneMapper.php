@@ -11,8 +11,8 @@ class BorderstoneMapper extends Mapper{
 		$length = Mapper::getLengthForReferenceInternal($reference_internal, $language_id);
 		$width = Mapper::getWidthForReferenceInternal($reference_internal, $language_id);
 		
-		Borderstone bs = new Borderstone($price, $reference_internal, $category, $color, 
+		$bs = new Borderstone($price, $reference_internal, $category, $color,
 			$length, $material, $tiles, $type, $width, $shape);
-		return bs;
+		return $bs;
 	}
 }

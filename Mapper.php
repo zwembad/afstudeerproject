@@ -5,9 +5,9 @@
  *********************************************************************/
 class Mapper{
  
-	protected const LENGTH_OPTIONS_ID = 168;
-	protected const WIDTH_OPTIONS_ID = 171;
-	protected const HEIGHT_OPTIONS_ID = 30;
+	protected static $LENGTH_OPTIONS_ID = 168;
+	protected static $WIDTH_OPTIONS_ID = 171;
+	protected static $HEIGHT_OPTIONS_ID = 30;
 	protected $_language_id;
 	 
 	public function __construct($_language_id=4){
@@ -30,7 +30,7 @@ class Mapper{
 		." ORDER BY options_id";
 		
 		$query = tep_db_query($statement);
-		$propAttribute = tep_db_fetch_all($query);
+		$propAttributes = tep_db_fetch_all($query);
 		return $propAttributes;
 	}	
 	
@@ -38,7 +38,7 @@ class Mapper{
 	//returns price
 	public function getPriceForReferenceInternal($reference_internal){		
 		$statement = "SELECT products_price"
-		. " FROM ". TABLE_PRODUCTS .
+		. " FROM ". TABLE_PRODUCTS
 		." WHERE products_reference_internal = '" .$reference_internal . "'";
 		$query = tep_db_query($statement);
 		$priceArray = tep_db_fetch_array($query);	
