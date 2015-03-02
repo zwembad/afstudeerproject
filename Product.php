@@ -18,7 +18,7 @@ abstract class Product {
 
     public function getPrice()
     {
-        return $this->_price;
+        return number_format($this->_price,2);
     }
 
     public function setReferenceInternal($referenceInternal)

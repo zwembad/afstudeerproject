@@ -2,5 +2,5 @@
 
 interface CalculationStrategy
 {
-    public function calculatePrice($pool, $product);
+    public function calculatePrice($pool, $products);
 }

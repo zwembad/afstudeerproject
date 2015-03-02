@@ -1,34 +1,44 @@
 <?php
 
-require_once('CalculationStrategy.php');
-
 class StoneCalculationStrategy implements CalculationStrategy {
-
+	
     function __construct()
     {
     }
 
-    public function calculatePrice($pool, $borderstone){
-        $metersRound = 0;
-        $numberOfBorderstonesInnerCorner = 0;
-        $numberOfBorderstonesOuterCornerLeft = 0;
-        $numberOfBorderstonesOuterCornerRight = 0;
+    public function calculatePrice($pool, $products){
+		$mapper = new PropAttributeMapper(4);
+		$borderstoneArray = array();
+		for($i=0; $i< count($products); $i++){
+			$product = $products[$i];
+			$attributes = $mapper->getPropAttributesForRefInternal($product[1]);
+			$borderstone = new Borderstone($product[0], $product[1], 'natuursteen', 0,$attributes['Hoogte (cm)'], $attributes['Lengte (cm)'], $product[2], 0, 'zonder neus', $attributes['Breedte (cm)'], $attributes['Boordsteen vorm']);
+			if(!is_null($attributes['Boordsteen vorm'])){ 
+				$borderstoneArray[$attributes['Boordsteen vorm']] = $borderstone;
+			}
+		}
+		
+		
+		$metersRound = 0;
+        $numberInnerCorner = 0;
+        $numberOuterCornerLeft = 0;
+        $numberOuterCornerRight = 0;
        if ($pool->getShape() == 1){ //Rechthoekig
-           $metersStraight = ($pool->getLength() * 2) + ($pool->getWIdth() * 2);
-           $numberOfBorderstonesInnerCorner = 4;
-           $numberOfBorderstonesOuterCornerLeft = 0;
-           $numberOfBorderstonesOuterCornerRight = 0;
+           $metersStraight = ($pool->getLength() * 2) + ($pool->getWidth() * 2);
+           $numberInnerCorner = 4;
+           $numberOuterCornerLeft = 0;
+           $numberOuterCornerRight = 0;
        } elseif ($pool->getShape() == 2){ // "Rechthoekig met rom trap"
            $metersStraight = (2 * ($pool->getLength() + $pool->getWidth())) - $pool->getDiameter();
            $metersRound = $pool->getDiameter() * 3.16/2;
-           $numberOfBorderstonesInnerCorner = 4;
-           $numberOfBorderstonesOuterCornerLeft = 1;
-           $numberOfBorderstonesOuterCornerRight = 1;
+           $numberInnerCorner = 4;
+           $numberOuterCornerLeft = 1;
+           $numberOuterCornerRight = 1;
        } elseif ($pool->getShape() == 3){ //"Rechthoekig met rechthoekige trap"
            $metersStraight = ($pool->getLength() * 2) + ($pool->getWidth() * 2); //+ $pool->getDiameter(); //+C40
-           $numberOfBorderstonesInnerCorner = 4;
-           $numberOfBorderstonesOuterCornerLeft = 1;
-           $numberOfBorderstonesOuterCornerRight = 1;
+           $numberInnerCorner = 4;
+           $numberOuterCornerLeft = 1;
+           $numberOuterCornerRight = 1;
        } elseif ($pool->getShape() == 4){ // Rond
            $metersRound = $pool->getDiameter() * 3.16;
            $metersStraight = 0;
@@ -37,64 +47,78 @@ class StoneCalculationStrategy implements CalculationStrategy {
            $metersRound = $pool->getWidth() * 3.16;
        }
 
-       $length = $borderstone->getLength() + 0.000001;
+       $length = $borderstoneArray['rechte']->getLength() + 0.000001;
 
-       $numberOfBorderstonesStraight = 1 + floor($metersStraight/($length/100) + 0.5); //floor 12/50/100
+       $numberStraight = 1 + floor($metersStraight/($length/100) + 0.5); //floor 12/50/100
 
        if ($length > 1){
-           $numberOfBorderstonesCurved = floor($metersRound/($length/100) + 0.5);
+           $numberCurved = floor($metersRound/($length/100) + 0.5);
        } else {
-           $numberOfBorderstonesCurved = 0;
+           $numberCurved = 0;
        }
 
-       if ($borderstone->getTiles()){
-           $numberOfTiles = $numberOfBorderstonesStraight + $numberOfBorderstonesCurved + (3 * $numberOfBorderstonesInnerCorner);
+       if ($borderstoneArray['rechte']->getTiles()){
+           $numberOfTiles = $numberStraight + $numberCurved + (3 * $numberInnerCorner);
        } else {
            $numberOfTiles = 0;
        }
 
-       if ($borderstone->getMaterial() == "betonsteen"){
-           $voegsel = floor(($numberOfBorderstonesStraight/30) + 0.5);
+       if ($borderstoneArray['rechte']->getMaterial() == "betonsteen"){
+           $voegsel = floor(($numberStraight/30) + 0.5);
        } else {
            $voegsel = 0;
        }
 
-       $transport = floor(($numberOfBorderstonesStraight + $numberOfBorderstonesInnerCorner + $numberOfBorderstonesOuterCornerLeft + $numberOfBorderstonesOuterCornerRight
-                + $numberOfBorderstonesCurved + $numberOfTiles + $voegsel)/40 + 0.99);
+       $transport = floor(($numberStraight + $numberInnerCorner + $numberOuterCornerLeft + $numberOuterCornerRight
+                + $numberCurved + $numberOfTiles + $voegsel)/40 + 0.99);
 
-       $priceBorderstonesStraight = $numberOfBorderstonesStraight * 24;
-       $priceBorderstonesInnerCorner = $numberOfBorderstonesInnerCorner * 43;
-       $priceBorderstonesOuterCornerLeft = $numberOfBorderstonesOuterCornerLeft * 21;
-       $priceBorderstonesOuterCornerRight = $numberOfBorderstonesOuterCornerRight * 21;
-       $priceBorderstonesCurved = $numberOfBorderstonesCurved * 36;
+       $priceStraight = $numberStraight * $borderstoneArray['rechte']->getPrice();
+	   $priceInnerCorner = $numberInnerCorner * $borderstoneArray['afgeronde binnenhoek']->getPrice();
+       $priceOuterCornerLeft = $numberOuterCornerLeft * $borderstoneArray['linkse buitenhoek']->getPrice();
+       $priceOuterCornerRight = $numberOuterCornerRight * $borderstoneArray['rechtse buitenhoek']->getPrice();
+       $priceCurved = $numberCurved * $borderstoneArray['ronde']->getPrice();
        $priceTiles = $numberOfTiles * 21;
        $priceVoegsel = $voegsel * 21;
        $priceTransport = $transport * 42.35;
 
-       $priceTotal = $priceBorderstonesStraight + $priceBorderstonesInnerCorner + $priceBorderstonesOuterCornerLeft + $priceBorderstonesOuterCornerRight + $priceBorderstonesCurved + $priceTiles
+       $priceTotal = $priceStraight + $priceInnerCorner + $priceOuterCornerLeft + $priceOuterCornerRight + $priceCurved + $priceTiles
            + $priceVoegsel + $priceTransport;
 
-       $array ['borderstonesStraight'] = $numberOfBorderstonesStraight;
-       $array ['borderstonesInnerCorner'] = $numberOfBorderstonesInnerCorner;
-       $array ['borderstonesOuterCornerLeft'] = $numberOfBorderstonesOuterCornerLeft;
-       $array ['borderstonesOuterCornerRight'] = $numberOfBorderstonesOuterCornerRight;
-       $array ['borderstonesCurved'] = $numberOfBorderstonesCurved;
+	  // var_dump($borderstoneArray['rechte']->getReferenceInternal());
+       $array ['borderstonesStraight'] = $numberStraight;
+	   $array['refBorderstonesStraight'] = $borderstoneArray['rechte']->getReferenceInternal();
+	   $array['unitPriceBorderstonesStraight'] = $borderstoneArray['rechte']->getPrice();
+	   
+       $array ['borderstonesInnerCorner'] = $numberInnerCorner;
+	   $array['refBorderstonesInnerCorner'] = $borderstoneArray['afgeronde binnenhoek']->getReferenceInternal();
+	   $array['unitPriceBorderstonesInnerCorner'] = $borderstoneArray['afgeronde binnenhoek']->getPrice();
+	   
+       $array ['borderstonesOuterCornerLeft'] = $numberOuterCornerLeft;
+	   $array['refBorderstonesOuterCornerLeft'] = $borderstoneArray['linkse buitenhoek']->getReferenceInternal();
+	   $array['unitPriceBorderstonesOuterCornerLeft'] = $borderstoneArray['linkse buitenhoek']->getPrice();
+	   
+       $array ['borderstonesOuterCornerRight'] = $numberOuterCornerRight;
+	   $array['refBorderstonesOuterCornerRight'] = $borderstoneArray['rechtse buitenhoek']->getReferenceInternal();
+	   $array['unitPriceBorderstonesOuterCornerRight'] = $borderstoneArray['rechtse buitenhoek']->getPrice();
+	   
+       $array ['borderstonesCurved'] = $numberCurved;
+	   $array['refBorderstonesCurved'] = $borderstoneArray['ronde']->getReferenceInternal();
+	   $array['unitPriceBorderstonesCurved'] = $borderstoneArray['ronde']->getPrice();
        $array ['tiles'] = $numberOfTiles;
        $array ['voegsel'] = $voegsel;
        $array ['transport'] = $transport;
 
-       $array ['priceBorderstonesStraight'] = $priceBorderstonesStraight;
-       $array ['priceBorderstonesInnerCorner'] = $priceBorderstonesInnerCorner;
-       $array ['priceBorderstonesOuterCornerLeft'] = $priceBorderstonesOuterCornerLeft;
-       $array ['priceBorderstonesOuterCornerRight'] = $priceBorderstonesOuterCornerRight;
-       $array ['priceBorderstonesCurved'] = $priceBorderstonesCurved;
+       $array ['priceStraight'] = $priceStraight;
+       $array ['priceInnerCorner'] = $priceInnerCorner;
+       $array ['priceOuterCornerLeft'] = $priceOuterCornerLeft;
+       $array ['priceOuterCornerRight'] = $priceOuterCornerRight;
+       $array ['priceCurved'] = $priceCurved;
        $array ['priceTiles'] = $priceTiles;
        $array ['priceVoegsel'] = $priceVoegsel;
        $array ['priceTransport'] = $priceTransport;
        $array ['priceTotal'] = $priceTotal;
-
-       // $array = array('borderstonesStraight' => $numberOfBorderstonesStraight);
-
+	   
+	   //var_dump($array);
        return $array;
-}
+	}
 } 

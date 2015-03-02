@@ -1,6 +1,5 @@
 <?php
 
-
 class Borderstone extends Product {
 
     private $_length;
@@ -13,11 +12,12 @@ class Borderstone extends Product {
     private $_tiles; // 50x50 tegels (boolean)
     private $_shape; // gebogen, binnenhoek, buitenhoek, ...
 
-    function __construct($_price, $_referenceInternal, $_category, $_color, $_length, $_material, $_tiles, $_type, $_width, $_shape)
+    function __construct($_price, $_referenceInternal, $_category, $_color, $_height, $_length, $_material, $_tiles, $_type, $_width, $_shape)
     {
 		parent::__construct($_price, $_referenceInternal);
         $this->_category = $_category;
         $this->_color = $_color;
+		$this->_height = $height;
         $this->_length = $_length;
         $this->_material = $_material;
         $this->_tiles = $_tiles;
