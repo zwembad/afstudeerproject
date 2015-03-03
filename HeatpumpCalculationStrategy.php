@@ -25,7 +25,7 @@ class HeatpumpCalculationStrategy implements CalculationStrategy {
      * - Percentage oppervlakte zwembadverwarming
      * @return array 
      */
-    public function calculatePrice($pool, $heatpump){
+    public function calculatePrice($pool, $product){
         $TEMP_ZONDER_VERWARMING = [];
         $TEMP_VERHOGING = [];
         $KW_TEMP_HOOG = [];
@@ -37,22 +37,22 @@ class HeatpumpCalculationStrategy implements CalculationStrategy {
             $TEMP_ZONDER_VERWARMING[$month] = 
                     Self::$TEMP_ZONDER_VERWARMING_Z_ARRAY[$month] + (
                     Self::$TEMP_ZONDER_VERWARMING_AA_ARRAY[$month] *
-                    $heatpump->getSurfacePoolHeatingPercentage() / 100);
-            $TEMP_VERHOGING[$month] = $heatpump->getDesiredTemperature() - $TEMP_ZONDER_VERWARMING[$month];
+                    $product->getSurfacePoolHeatingPercentage() / 100);
+            $TEMP_VERHOGING[$month] = $product->getDesiredTemperature() - $TEMP_ZONDER_VERWARMING[$month];
             $KW_TEMP_HOOG[$month] = (-0.009 * $pool->getBuildinPercentage() + 2) *
                     ($pool->getVolume() / 50) * 11.66 * $TEMP_VERHOGING[$month];
             if ($pool->getCovering() == "neen") {
                 $KW_TEMP_HOOG[$month] = $KW_TEMP_HOOG[$month] * 0.7;
             }
-            $GEM_COP[$month] = $heatpump->getCop26c() - (26 - Self::$GEM_TEMP_ARRAY[$month]) *
-                    ($heatpump->getCop26c() - $heatpump->getCop5c()) / 21;
+            $GEM_COP[$month] = $product->getCop26c() - (26 - Self::$GEM_TEMP_ARRAY[$month]) *
+                    ($product->getCop26c() - $product->getCop5c()) / 21;
             $KW_POMP[$month] = $KW_TEMP_HOOG[$month] / $GEM_COP[$month];
             $KW_VERWERKING[$month] = $KW_TEMP_HOOG[$month];
             $VERBRUIK_OLIE[$month] = $KW_VERWERKING[$month] / 10;
         }
         
         $KW_POMP_BINNEN = [];
-        $TEMP_VERHOGING_BINNEN = $heatpump->getDesiredTemperature() - 17;
+        $TEMP_VERHOGING_BINNEN = $product->getDesiredTemperature() - 17;
         $KW_TEMP_HOOG_BINNEN = (-0.009 * $pool->getBuildinPercentage() + 2) *
                 ($pool->getVolume() / 50) * 11.66 * $TEMP_VERHOGING_BINNEN;
         $KW_VERWERKING_BINNEN = $KW_TEMP_HOOG_BINNEN;
@@ -141,28 +141,28 @@ class HeatpumpCalculationStrategy implements CalculationStrategy {
         
         //Q50 is $factor
         //Oude berekening
-        If ($heatpump->getPeriod() == 1) { // 1 = Januari - December;
+        If ($product->getPeriod() == 1) { // 1 = Januari - December;
             // VLOOKUP(30;AC6:AI85;6;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_oud = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[1] * 7.5) / $factor;
             } Else {
                 $kw_oud = $KW_TEMP_HOOG[0] / ($GEM_COP[1] * 7.5) / $factor;
             }
-        } If ($heatpump->getPeriod() == 2) { // 2 = Maart - November;
+        } If ($product->getPeriod() == 2) { // 2 = Maart - November;
             // VLOOKUP(30;AE6:AI85;4;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_oud = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[1] * 7.5) / $factor;
             } Else {
                 $kw_oud = $KW_TEMP_HOOG[2] / ($GEM_COP[3] * 7.5) / $factor;
             }
-        } If ($heatpump->getPeriod() == 3) { // 3 = April - Oktober;
+        } If ($product->getPeriod() == 3) { // 3 = April - Oktober;
             // VLOOKUP(30;AF6:AI85;3;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_oud = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[1] * 7.5) / $factor;
             } Else {
                 $kw_oud = $KW_TEMP_HOOG[3] / ($GEM_COP[4] * 7.5) / $factor;
             }
-        } If ($heatpump->getPeriod() == 4) { // 4 = Mei - September;
+        } If ($product->getPeriod() == 4) { // 4 = Mei - September;
             // VLOOKUP (30;AG6:AI85;2;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_oud = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[1] * 7.5) / $factor;
@@ -175,28 +175,28 @@ class HeatpumpCalculationStrategy implements CalculationStrategy {
 
         //Q50 is $factor
         //Nieuwe berekening
-        If ($heatpump->getPeriod() == 1) { // 1 = Januari - December;
+        If ($product->getPeriod() == 1) { // 1 = Januari - December;
             // VLOOKUP(30;AC6:AI85;6;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_nieuw = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[0] * 7.5) / $factor;
             } Else {
                 $kw_nieuw = $KW_TEMP_HOOG[0] / ($GEM_COP[0] * 7.5) / $factor;
             }
-        } If ($heatpump->getPeriod() == 2) { // 2 = Maart - November;
+        } If ($product->getPeriod() == 2) { // 2 = Maart - November;
             // VLOOKUP(30;AE6:AI85;4;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_nieuw = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[0] * 7.5) / $factor;
             } Else {
                 $kw_nieuw = $KW_TEMP_HOOG[2] / ($GEM_COP[2] * 7.5) / $factor;
             }
-        } If ($heatpump->getPeriod() == 3) { // 3 = April - Oktober;
+        } If ($product->getPeriod() == 3) { // 3 = April - Oktober;
             // VLOOKUP(30;AF6:AI85;3;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_nieuw = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[0] * 7.5) / $factor;
             } Else {
                 $kw_nieuw = $KW_TEMP_HOOG[3] / ($GEM_COP[3] * 7.5) / $factor;
             }
-        } If ($heatpump->getPeriod() == 4) { // 4 = Mei - September;
+        } If ($product->getPeriod() == 4) { // 4 = Mei - September;
             // VLOOKUP (30;AG6:AI85;2;TRUE)/Q50
             If ($pool->getCovering() == "binnenbad") {
                 $kw_nieuw = $KW_TEMP_HOOG_BINNEN / ($GEM_COP[0] * 7.5) / $factor;
