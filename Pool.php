@@ -11,7 +11,7 @@ class Pool {
     private $_covering;
     private $_buildinPercentage;
     
-    function __construct($_depth, $_diameter, $_length, $_shape, $_type, $_width, $_volume, $_covering, $_buildinPercentage)
+    function __construct($_depth, $_diameter, $_length, $_shape, $_type, $_width, $_volume = 0, $_covering = 0, $_buildinPercentage = 0)
     {
         $this->_depth = $_depth;
         $this->_diameter = $_diameter;
