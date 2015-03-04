@@ -5,6 +5,8 @@
  *********************************************************************/
 class PropAttributeMapper{
 
+	private $_language_id;
+
 	public function __construct($_language_id){
 		$this->setLanguageId($_language_id);
 	}
@@ -40,7 +42,7 @@ class PropAttributeMapper{
 		return $priceArray['products_price'];
 	}
 	
-	 public function setLanguageId($_language_id)
+	public function setLanguageId($_language_id)
     {
         $this->_language_id = $_language_id;
     }
