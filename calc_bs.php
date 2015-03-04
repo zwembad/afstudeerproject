@@ -31,7 +31,6 @@
     $formData = array(
         CALC_BS_FORM_STONECATEGORY => $_POST['stonecategory'],
         CALC_BS_FORM_STONEMATERIAL => $_POST['stonematerial'],
-        CALC_BS_FORM_STONETYPE => $_POST['stonetype'],
         CALC_BS_FORM_TILES => $_POST['tiles'],
         
         
@@ -44,29 +43,17 @@
 	//new Pool with parameters: $depth, $_diameter, $_length, $_shape, $_type, $_width
 	$pool = new Pool(0,$formData[CALC_BS_FORM_POOLSIZE_D],$formData[CALC_BS_FORM_POOLSIZE_L], 
 								$formData[CALC_BS_FORM_POOLLAYOUT], 0, $formData[CALC_BS_FORM_POOLSIZE_B]);
-	
-	//new Borderstone with parameters: $_category, $_color, $_length, $_material, $_tiles, $_type, $_width
- //  $borderstone = new BorderStone($formData[0]['value'], 0, 50, $formData[1]['value'], $formData[3]['value'], $formData[2]['value'], 35);
-   
-   
-	//$products = $categoryMapper->getProductsOfCategory($formData[CALC_BS_FORM_STONEMATERIAL]);
-	$products= $categoryMapper->getProductsOfCategory(785);
-	$calculationStrategy = new StoneCalculationStrategy();
+	   
+	$products = $categoryMapper->getProductsOfCategory($formData[CALC_BS_FORM_STONEMATERIAL]);
+	$calculationStrategy = new StoneCalculationStrategy($formData[CALC_BS_FORM_STONECATEGORY], $formData[CALC_BS_FORM_TILES]);
 	$calculator = new Calculator($pool, $products, $calculationStrategy);
-	$array = $calculator->calculatePrice();
-	
-   
-    $subject = CALC_BS_TEXT_TITLE." > Contact Robotcleaner";
- 
-	}
-	
-	$categories = $categoryMapper->getCategories(33);
+	$array = $calculator->calculatePrice();	
+  }
+  $categories = $categoryMapper->getCategories(33);
 	
   $breadcrumb->add(NAVBAR_TITLE, tep_href_link('contact_robotcleaner.php'));
    
 ?>
-
-
 <?php require(DIR_WS_CUR_TEMPLATE . 'header.php'); ?>
 <!-- header_eof //-->
 <link rel="stylesheet" href="/templates/default/css/ajax-form-validation.css" type="text/css">
@@ -84,10 +71,28 @@ $(document).ready(function(){
 	// The text to show up within a field when it is incorrect
 	emptyerror = "";
 	emailerror = "";
+	$('input[name="stonematerial"]:checked', '#calc_bs').parent().show(); 
+	var poolLayout = $('input:radio[name="poollayout"]:checked', '#calc_bs').val();
+	if(poolLayout){
+	$("#diameter_input-group").hide();
+		$("#length_input-group").show();
+		$("#width_input-group").show();
+		required=["poolsize_l", "poolsize_b"];
+	}
+	if(poolLayout == 2){
+		$("#diameter_input-group").show();
+		$("#length_input-group").show();
+		$("#width_input-group").show();
+		required=["poolsize_l", "poolsize_b", "poolsize_d"];
+	}
+	if(poolLayout == 4){
+		$("#diameter_input-group").show();
+		$("#length_input-group").hide();
+		$("#width_input-group").hide();
+		required=["poolsize_d"];   
+	}
 	
-	$("#calc_bs").submit(function(){	
-		
-		//Validate required fields
+	$("#calc_bs").submit(function(){
 		for (i=0;i<required.length;i++) {
 			var input = $('#'+required[i]);
 			if ((input.val() == "") || (input.val() == emptyerror)) {
@@ -135,47 +140,22 @@ $(document).ready(function(){
 	});
 	
 	//Hide and show radio input fields when clicked
-	$('input:radio[name="stonecategory"]').change(function(){
-		for (var i=0; i < $('input:radio[name="stonecategory"]').length; i++){
-			
-		}	
-	});
-	
 	$(document).on("click",'input:radio[name="stonecategory"]', function () {
 		var index = $(this).index()/2;
 		$('#material_group'+index).siblings().hide();
 		$('#material_group'+index).show();
 	});
-
-	$('input:radio[name="stonematerial"]').change(function(){
-		if($(this).val() == "Beige graniet"){
-			$("#tile_type_neus").hide();
-			$("#tile_type_L").hide();
-			$("#tile_type_I").show();
-		}
-		else if($(this).val() == "New Jasberg"){
-			$("#tile_type_neus").show();
-			$("#tile_type_L").hide();
-			$("#tile_type_I").show();
-		}
-		else if($(this).val() == "Black Panda"){							
-			$("#tile_type_neus").show();
-			$("#tile_type_L").hide();
-			$("#tile_type_I").show();
-		}
-		else{
-			$("#tile_type_neus").hide();
-			$("#tile_type_L").hide();
-			$("#tile_type_I").show();
-		}
-	});
-				
-	$('input:radio[name="poollayout"]').change(function(){
+	
+	var romTrap = function(){
+		$("#diameter_input-group").show();
+		$("#length_input-group").show();
+		$("#width_input-group").show();
+		required=["poolsize_l", "poolsize_b", "poolsize_d"];
+	}
+	
+	$('input:radio[name="poollayout"]').change( function(){
 		if($(this).val() == "2"){      							//if 'rechthoekig met romeinse trap'
-			$("#diameter_input-group").show();
-			$("#length_input-group").show();
-			$("#width_input-group").show();
-			required=["poolsize_l", "poolsize_b", "poolsize_d"];    //fields length, width and diameter are required
+			romTrap();
 		}
 		else if($(this).val() == "4"){     //if 'rond'
 			$("#diameter_input-group").show();
@@ -198,7 +178,6 @@ $(document).ready(function(){
 	//show tooltip on hover green question mark
 	$("[rel=tooltip_tile]").tooltip({ placement: 'right'});
 			
-	
 	
 });	
 </script>
@@ -257,14 +236,13 @@ echo "</div>";
 	<div id="material_group<?php echo $nr; ?>" style="display:none">
 		<?php 
 			foreach($group as $material){ 
-			
-			if(!is_null($categoryMapper->getCategories($material[0]))) { //material has a subcategory e.g. neus
-				$subcategories = $categoryMapper->getCategories($material[0]);
-				foreach($subcategories as $sub){ ?>
-					<?php echo tep_draw_radio_field('stonematerial', $sub[0], '', 'class="radio_item" id="'.$sub[1].'"'); ?> <label class="label_item" for="<?php echo $sub[1]; ?>"> <?php echo $sub[1]; ?>
-					<?php echo tep_image('/t.php?src=images/categories/'. $sub[2]. '&amp;w=155&amp;h=155&amp;zc=2', '', '', '', 'class="img-responsive"'); ?>
-					</label>
-	<?php  }
+				if(!is_null($categoryMapper->getCategories($material[0]))) { //material has a subcategory e.g. neus
+					$subcategories = $categoryMapper->getCategories($material[0]);
+					foreach($subcategories as $sub){ ?>
+						<?php echo tep_draw_radio_field('stonematerial', $sub[0], '', 'class="radio_item" id="'.$sub[1].'"'); ?> <label class="label_item" for="<?php echo $sub[1]; ?>"> <?php echo $sub[1]; ?>
+						<?php echo tep_image('/t.php?src=images/categories/'. $sub[2]. '&amp;w=155&amp;h=155&amp;zc=2', '', '', '', 'class="img-responsive"'); ?>
+						</label>
+		<?php  	}
 			continue;}
 			echo tep_draw_radio_field('stonematerial', $material[0], '', 'class="radio_item" id="'.$material[1].'"'); ?> <label class="label_item" for="<?php echo $material[1]; ?>"> <?php echo $material[1]; ?>
 		<?php echo tep_image('/t.php?src=images/categories/'. $material[2]. '&amp;w=155&amp;h=155&amp;zc=2', '', '', '', 'class="img-responsive"'); ?>
@@ -274,28 +252,6 @@ echo "</div>";
 	<?php } ?>
 </div> 
 </div>
-
-<div class="form-group">	
-<label for="stonetype" class="col-sm-3 control-label"><?php echo CALC_BS_FORM_STONETYPE; ?></label>
-<div class="col-sm-9">
-	<div class="inline" id="tile_type_neus" >
-    <?php echo tep_draw_radio_field('stonetype', '1', '', 'class="radio_item" id="stonetype_1"'); ?> <label class="label_item" for="stonetype_1"> <?php echo CALC_BS_FORM_STONETYPE_1; ?>
-	<?php echo tep_image("/t.php?src=images/categories/type_neus.png&amp;w=155&amp;h=73&amp;zc=2", '', '', '', 'class="img-responsive"'); ?>
-	</label>
-	</div>
-	<div class="inline" id="tile_type_L">
-	<?php echo tep_draw_radio_field('stonetype', '2', '', 'class="radio_item" id="stonetype_2"'); ?> <label class="label_item" for="stonetype_2"> <?php echo CALC_BS_FORM_STONETYPE_2; ?>
-	<?php echo tep_image("/t.php?src=images/categories/type_L.png&amp;w=155&amp;h=73&amp;zc=2", '', '', '', 'class="img-responsive"'); ?>
-	</label>
-	</div>
-	<div class="inline" id="tile_type_I">
-	<?php echo tep_draw_radio_field('stonetype', '3', '', 'class="radio_item" id="stonetype_3"'); ?> <label class="label_item" for="stonetype_3"> <?php echo CALC_BS_FORM_STONETYPE_3; ?>
-	<?php echo tep_image("/t.php?src=images/categories/type_I.png&amp;w=155&amp;h=73&amp;zc=2", '', '', '', 'class="img-responsive"' ); ?>
-	</label>
-	</div>
-</div>
-</div> 
-
 <div class="clearfix"><hr /></div>
 
 <div class="form-group">	
@@ -335,25 +291,24 @@ echo "</div>";
 	<div class="col-sm-9">
 		<div class="form-group">
 			<div class="input-group" id="length_input-group">
-				<?php echo tep_draw_input_field('poolsize_l', '', 'id="poolsize_l" placeholder="'. CALC_BS_FORM_POOLSIZE_L .'" step="any" min="0" class="form-control"','number'); ?>
+				<?php echo tep_draw_input_field('poolsize_l', '', 'id="poolsize_l" placeholder="'. CALC_BS_FORM_POOLSIZE_L .'" step="any" min="1" class="form-control"','number'); ?>
 				<div class="input-group-addon">m</div>
 			</div>
 		</div>
 		<div class="form-group">	
 				<div class="input-group" id="width_input-group">
-					<?php echo tep_draw_input_field('poolsize_b', '', 'id="poolsize_b" placeholder="' . CALC_BS_FORM_POOLSIZE_B .'" step="any" min="0" class="form-control"','number');?>
+					<?php echo tep_draw_input_field('poolsize_b', '', 'id="poolsize_b" placeholder="' . CALC_BS_FORM_POOLSIZE_B .'" step="any" min="1" class="form-control"','number');?>
 					<div class="input-group-addon">m</div>
 				</div>
 		</div>
 		<div class="form-group">
 				<div class="input-group" id="diameter_input-group">
-					<?php echo tep_draw_input_field('poolsize_d', '', 'id="poolsize_d" placeholder="' . CALC_BS_FORM_POOLSIZE_D .'" step="any" min="0" class="form-control"','number');?>
+					<?php echo tep_draw_input_field('poolsize_d', '', 'id="poolsize_d" placeholder="' . CALC_BS_FORM_POOLSIZE_D .'" step="any" min="3" class="form-control"','number');?>
 					<div class="input-group-addon">m</div>
 				</div>
 				<?php echo layout_button('submit', 'Bereken', '', '', 'btn btn-primary margin-top green-button pull-right', '', 'right'); ?>
 		</div>
 	</div>
-
 
 <div class="clearfix"><hr /></div>
 
@@ -395,40 +350,40 @@ echo "</div>";
 					<td><?php echo number_format($array['priceOuterCornerLeft'],2); ?></td>
 				</tr>
 				<tr>
-						<th scope="row">Buitenhoek rechts</th>
-						<td><?php echo $array['refBorderstonesOuterCornerRight']; ?></td>
-						<td><?php echo $array['borderstonesOuterCornerRight']; ?></td>
-						<td><?php echo $array['unitPriceBorderstonesOuterCornerRight']; ?></td>
-						<td><?php echo number_format($array['priceOuterCornerRight'],2); ?></td>
+					<th scope="row">Buitenhoek rechts</th>
+					<td><?php echo $array['refBorderstonesOuterCornerRight']; ?></td>
+					<td><?php echo $array['borderstonesOuterCornerRight']; ?></td>
+					<td><?php echo $array['unitPriceBorderstonesOuterCornerRight']; ?></td>
+					<td><?php echo number_format($array['priceOuterCornerRight'],2); ?></td>
 				</tr>
 				<tr>
-						<th scope="row">Gebogen boordsteen</th>
-						<td><?php echo $array['refBorderstonesCurved']; ?></td>
-						<td><?php echo $array['borderstonesCurved']; ?></td>
-						<td><?php echo $array['unitPriceBorderstonesCurved']; ?></td>
-						<td><?php echo number_format($array['priceCurved'],2); ?></td>
-					</tr>
-					<tr>
-						<th scope="row">Tegel</th>
-						<td></td>
-						<td><?php echo $array['tiles']; ?></td>
-						<td></td>
-						<td><?php echo $array['priceTiles']; ?></td>
-					</tr>
-					<tr>
-						<th scope="row">Voegsel</th>
-						<td></td>
-						<td><?php echo $array['voegsel']; ?></td>
-						<td></td>
-						<td><?php echo $array['priceVoegsel']; ?></td>
-					</tr>
-					<tr>
-						<th scope="row">Transport</th>
-						<td>ZZZE8010</td>
-						<td><?php echo $array['transport']; ?></td>
-						<td></td>
-						<td><?php echo $array['priceTransport']; ?></td>
-					</tr>
+					<th scope="row">Gebogen boordsteen</th>
+					<td><?php echo $array['refBorderstonesCurved']; ?></td>
+					<td><?php echo $array['borderstonesCurved']; ?></td>
+					<td><?php echo $array['unitPriceBorderstonesCurved']; ?></td>
+					<td><?php echo number_format($array['priceCurved'],2); ?></td>
+				</tr>
+				<tr>
+					<th scope="row">Tegel</th>
+					<td><?php echo $array['refTiles']; ?></td>
+					<td><?php echo $array['tiles']; ?></td>
+					<td><?php echo $array['unitPriceTiles']; ?></td>
+					<td><?php echo $array['priceTiles']; ?></td>
+				</tr>
+				<tr>
+					<th scope="row">Voegsel</th>
+					<td><?php echo $array['refVoegsel']; ?></td>
+					<td><?php echo $array['voegsel']; ?></td>
+					<td><?php echo $array['unitPriceVoegsel']; ?></td>
+					<td><?php echo $array['priceVoegsel']; ?></td>
+				</tr>
+				<tr>
+					<th scope="row">Transport</th>
+					<td>ZZZE8010</td>
+					<td><?php echo $array['transport']; ?></td>
+					<td>42.35</td>
+					<td><?php echo $array['priceTransport']; ?></td>
+				</tr>
 				<tr class="row_total">
 					<th>TOTAAL</th>
 					<td></td>

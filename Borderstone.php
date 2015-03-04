@@ -7,21 +7,17 @@ class Borderstone extends Product {
     private $_height;
     private $_category; //natuursteen or betonsteen
     private $_material; //jasberg, black panda, ...
-    private $_type; // type neus, type L, type I
     private $_color;
-    private $_tiles; // 50x50 tegels (boolean)
     private $_shape; // gebogen, binnenhoek, buitenhoek, ...
 
-    function __construct($_price, $_referenceInternal, $_category, $_color, $_height, $_length, $_material, $_tiles, $_type, $_width, $_shape)
+    function __construct($_price, $_referenceInternal, $_category, $_color, $_height, $_length, $_material, $_width, $_shape)
     {
 		parent::__construct($_price, $_referenceInternal);
         $this->_category = $_category;
         $this->_color = $_color;
-		$this->_height = $height;
+		$this->_height = $_height;
         $this->_length = $_length;
         $this->_material = $_material;
-        $this->_tiles = $_tiles;
-        $this->_type = $_type;
         $this->_width = $_width;
 		$this->_shape = $_shape;
     }
@@ -34,16 +30,6 @@ class Borderstone extends Product {
     public function getCategory()
     {
         return $this->_category;
-    }
-
-    public function setType($type)
-    {
-        $this->_type = $type;
-    }
-
-    public function getType()
-    {
-        return $this->_type;
     }
 
     public function setColor($color)
@@ -74,16 +60,6 @@ class Borderstone extends Product {
     public function getMaterial()
     {
         return $this->_material;
-    }
-
-    public function setTiles($tiles)
-    {
-        $this->_tiles = $tiles;
-    }
-
-    public function getTiles()
-    {
-        return $this->_tiles;
     }
 
     public function setWidth($width)

@@ -1,9 +1,36 @@
 <?php
+require(DIR_WS_CLASSES. 'Tile.php');
+require(DIR_WS_CLASSES. 'Voegsel.php');
 
 class StoneCalculationStrategy implements CalculationStrategy {
+
+	private $_stoneCategory;
+	private $_tiles;
 	
-    function __construct()
+    function __construct($_stoneCategory, $_tiles)
     {
+		$this->setTiles($_tiles);
+		$this->setStoneCategory($_stoneCategory);
+    }
+	
+	public function setStoneCategory($_stoneCategory)
+    {
+        $this->_stoneCategory = $_stoneCategory;
+    }
+
+    public function getStoneCategory()
+    {
+        return $this->_stoneCategory;
+    }
+	
+	public function setTiles($_tiles)
+    {
+        $this->_tiles = $_tiles;
+    }
+
+    public function getTiles()
+    {
+        return $this->_tiles;
     }
 
     public function calculatePrice($pool, $products){
@@ -12,12 +39,30 @@ class StoneCalculationStrategy implements CalculationStrategy {
 		for($i=0; $i< count($products); $i++){
 			$product = $products[$i];
 			$attributes = $mapper->getPropAttributesForRefInternal($product[1]);
-			$borderstone = new Borderstone($product[0], $product[1], 'natuursteen', 0,$attributes['Hoogte (cm)'], $attributes['Lengte (cm)'], $product[2], 0, 'zonder neus', $attributes['Breedte (cm)'], $attributes['Boordsteen vorm']);
+			$borderstone = new Borderstone($product[0], $product[1], $this->getStoneCategory(), '',$attributes['Hoogte (cm)'], $attributes['Lengte (cm)'], $product[2], $attributes['Breedte (cm)'], $attributes['Boordsteen vorm']);
 			if(!is_null($attributes['Boordsteen vorm'])){ 
 				$borderstoneArray[$attributes['Boordsteen vorm']] = $borderstone;
+			}else if(!is_null($attributes['Tegel'])){
+				$tileProduct = new Tile($product[0], $product[1]);
+			}else if(!is_null($attributes['Voegsel'])){
+				$voegselProduct = new Voegsel($product[0], $product[1]);
 			}
 		}
 		
+		if($this->getStoneCategory() == "Natuursteen"){
+			$straightStone = $borderstoneArray['rechte'];
+			$innerCornerStone = $borderstoneArray['afgeronde binnenhoek'];
+			$outerCornerStoneLeft = $borderstoneArray['linkse buitenhoek'];
+			$outerCornerStoneRight = $borderstoneArray['rechtse buitenhoek'];
+			$curvedCornerStone = $borderstoneArray['ronde'];
+		}else if($this->getStoneCategory() == "Boordsteen beton"){
+			$straightStone = $borderstoneArray['rechte'];
+			$innerCornerStone = $borderstoneArray['binnenhoek'];
+			$outerCornerStoneLeft = $borderstoneArray['buitenhoek'];
+			$outerCornerStoneRight = $borderstoneArray['buitenhoek'];
+			$curvedCornerStone = $borderstoneArray['boog met afgeronde neus'];
+		}
+
 		
 		$metersRound = 0;
         $numberInnerCorner = 0;
@@ -43,8 +88,16 @@ class StoneCalculationStrategy implements CalculationStrategy {
            $metersRound = $pool->getDiameter() * 3.16;
            $metersStraight = 0;
        } elseif ($pool->getShape() == 5){ //"Ovaal"
-           $metersStraight = 2* ($pool->getLength() - $pool->getWidth());
-           $metersRound = $pool->getWidth() * 3.16;
+			if($pool->getLength() >= $pool->getWidth()){
+				$metersStraight = 2* ($pool->getLength() - $pool->getWidth());
+			}else{
+				$metersStraight = 2* ($pool->getWidth() - $pool->getLength());
+			}
+			if($pool->getLength() > $pool->getWidth()){
+				$metersRound = $pool->getWidth() * 3.16;
+			}else{
+				$metersRound = $pool->getLength() * 3.16;
+			}
        }
 
        $length = $borderstoneArray['rechte']->getLength() + 0.000001;
@@ -57,13 +110,13 @@ class StoneCalculationStrategy implements CalculationStrategy {
            $numberCurved = 0;
        }
 
-       if ($borderstoneArray['rechte']->getTiles()){
+       if (!is_null($this->getTiles())){
            $numberOfTiles = $numberStraight + $numberCurved + (3 * $numberInnerCorner);
        } else {
            $numberOfTiles = 0;
        }
 
-       if ($borderstoneArray['rechte']->getMaterial() == "betonsteen"){
+       if ($this->getStoneCategory() == "Boordsteen beton"){
            $voegsel = floor(($numberStraight/30) + 0.5);
        } else {
            $voegsel = 0;
@@ -72,41 +125,53 @@ class StoneCalculationStrategy implements CalculationStrategy {
        $transport = floor(($numberStraight + $numberInnerCorner + $numberOuterCornerLeft + $numberOuterCornerRight
                 + $numberCurved + $numberOfTiles + $voegsel)/40 + 0.99);
 
-       $priceStraight = $numberStraight * $borderstoneArray['rechte']->getPrice();
-	   $priceInnerCorner = $numberInnerCorner * $borderstoneArray['afgeronde binnenhoek']->getPrice();
-       $priceOuterCornerLeft = $numberOuterCornerLeft * $borderstoneArray['linkse buitenhoek']->getPrice();
-       $priceOuterCornerRight = $numberOuterCornerRight * $borderstoneArray['rechtse buitenhoek']->getPrice();
-       $priceCurved = $numberCurved * $borderstoneArray['ronde']->getPrice();
-       $priceTiles = $numberOfTiles * 21;
-       $priceVoegsel = $voegsel * 21;
+	   $priceStraight = $numberStraight * $straightStone->getPrice();
+	   $priceInnerCorner = $numberInnerCorner * $innerCornerStone->getPrice();
+	   $priceOuterCornerLeft = $numberOuterCornerLeft * $outerCornerStoneLeft->getPrice();
+       $priceOuterCornerRight = $numberOuterCornerRight * $outerCornerStoneRight->getPrice();
+       $priceCurved = $numberCurved * $curvedCornerStone->getPrice();
+
+	   if(!is_null($tileProduct)){
+			$priceTiles = $numberOfTiles * $tileProduct->getPrice();
+	   }
+	   if(!is_null($voegselProduct)){
+			$priceVoegsel = $voegsel * $voegselProduct->getPrice();
+	   }
        $priceTransport = $transport * 42.35;
 
        $priceTotal = $priceStraight + $priceInnerCorner + $priceOuterCornerLeft + $priceOuterCornerRight + $priceCurved + $priceTiles
            + $priceVoegsel + $priceTransport;
 
-	  // var_dump($borderstoneArray['rechte']->getReferenceInternal());
-       $array ['borderstonesStraight'] = $numberStraight;
-	   $array['refBorderstonesStraight'] = $borderstoneArray['rechte']->getReferenceInternal();
-	   $array['unitPriceBorderstonesStraight'] = $borderstoneArray['rechte']->getPrice();
+		$array ['borderstonesStraight'] = $numberStraight;
+	   $array['refBorderstonesStraight'] = $straightStone->getReferenceInternal();
+	   $array['unitPriceBorderstonesStraight'] = $straightStone->getPrice();
 	   
        $array ['borderstonesInnerCorner'] = $numberInnerCorner;
-	   $array['refBorderstonesInnerCorner'] = $borderstoneArray['afgeronde binnenhoek']->getReferenceInternal();
-	   $array['unitPriceBorderstonesInnerCorner'] = $borderstoneArray['afgeronde binnenhoek']->getPrice();
+	   $array['refBorderstonesInnerCorner'] = $innerCornerStone->getReferenceInternal();
+	   $array['unitPriceBorderstonesInnerCorner'] = $innerCornerStone->getPrice();
 	   
        $array ['borderstonesOuterCornerLeft'] = $numberOuterCornerLeft;
-	   $array['refBorderstonesOuterCornerLeft'] = $borderstoneArray['linkse buitenhoek']->getReferenceInternal();
-	   $array['unitPriceBorderstonesOuterCornerLeft'] = $borderstoneArray['linkse buitenhoek']->getPrice();
+	   $array['refBorderstonesOuterCornerLeft'] = $outerCornerStoneLeft->getReferenceInternal();
+	   $array['unitPriceBorderstonesOuterCornerLeft'] = $outerCornerStoneLeft->getPrice();
 	   
        $array ['borderstonesOuterCornerRight'] = $numberOuterCornerRight;
-	   $array['refBorderstonesOuterCornerRight'] = $borderstoneArray['rechtse buitenhoek']->getReferenceInternal();
-	   $array['unitPriceBorderstonesOuterCornerRight'] = $borderstoneArray['rechtse buitenhoek']->getPrice();
+	   $array['refBorderstonesOuterCornerRight'] = $outerCornerStoneRight->getReferenceInternal();
+	   $array['unitPriceBorderstonesOuterCornerRight'] = $outerCornerStoneRight->getPrice();
 	   
        $array ['borderstonesCurved'] = $numberCurved;
-	   $array['refBorderstonesCurved'] = $borderstoneArray['ronde']->getReferenceInternal();
-	   $array['unitPriceBorderstonesCurved'] = $borderstoneArray['ronde']->getPrice();
+	   $array['refBorderstonesCurved'] = $curvedCornerStone->getReferenceInternal();
+	   $array['unitPriceBorderstonesCurved'] = $curvedCornerStone->getPrice();
        $array ['tiles'] = $numberOfTiles;
+	    if(!is_null($tileProduct)){
+	 	    $array['refTiles'] = $tileProduct->getReferenceInternal();
+			$array['unitPriceTiles'] = $tileProduct->getPrice();
+		}
        $array ['voegsel'] = $voegsel;
-       $array ['transport'] = $transport;
+	     if(!is_null($voegselProduct)){
+			$array['unitPriceVoegsel'] = $voegselProduct->getPrice();
+			$array ['refVoegsel'] = $voegselProduct->getReferenceInternal();
+	   }
+		$array ['transport'] = $transport;
 
        $array ['priceStraight'] = $priceStraight;
        $array ['priceInnerCorner'] = $priceInnerCorner;
@@ -118,7 +183,6 @@ class StoneCalculationStrategy implements CalculationStrategy {
        $array ['priceTransport'] = $priceTransport;
        $array ['priceTotal'] = $priceTotal;
 	   
-	   //var_dump($array);
        return $array;
 	}
 } 
